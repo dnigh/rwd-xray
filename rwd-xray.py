@@ -20,6 +20,11 @@ def main():
         "1": get_31_firmware,
     }
 
+    get_decoder = {
+        "Z": get_5a_decoder,
+        "1": get_31_decoder,
+    }
+
     f_name, f_ext = os.path.splitext(sys.argv[1])
     open_fn = open
     if f_ext == ".gz":
@@ -34,7 +39,7 @@ def main():
 
         headers = get_headers[file_fmt](f)
         k1, k2, k3 = get_keys[file_fmt](headers)
-        decoder = get_decoder(k1, k2, k3)
+        decoder = get_decoder[file_fmt](k1, k2, k3)
         assert len(decoder) == 256, "decoder table is not complete"
 
         firmware = get_firmware[file_fmt](f, decoder)
@@ -62,7 +67,7 @@ def get_5a_headers(f):
 
         # headers are wrapped with 0x00 (stop when second instance is found)
         if cnt == 0: null_cnt += 1
-        if null_cnt == 2:
+        if idx == 6:
             f.seek(-1, 1)
             break
 
@@ -162,7 +167,7 @@ def get_31_firmware(f, decoder):
 
     return ''.join(firmware)
 
-def get_decoder(k1, k2, k3):
+def get_31_decoder(k1, k2, k3):
     decoder = {}
 
     print "keys:", hex(k1), hex(k2), hex(k3)
@@ -170,6 +175,16 @@ def get_decoder(k1, k2, k3):
         e = (((i - k1) ^ k2) + k3) & 0xFF
         decoder[chr(e)] = chr(i)
 
+    return decoder
+
+def get_5a_decoder(k1, k2, k3):
+    decoder = {}
+
+    print "keys:", hex(k1), hex(k2), hex(k3)
+    for i in range(256):
+        e = ((( i + k1 ) - k2 ) ^ k3 ) & 0xFF
+        decoder[chr(e)] = chr(i)
+    
     return decoder
 
 def get_checksum(data):
