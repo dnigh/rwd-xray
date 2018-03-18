@@ -158,9 +158,9 @@ def get_31_firmware(f, decoder):
 
         addr_prev = addr
         addr = (ord(data[0]) << 12) | (ord(data[1]) << 4)
-        assert addr > addr_prev
+        assert addr >= addr_prev
         # fill any address gaps with null values
-        for i in range(0 if addr_prev == 0 else addr_prev + 128, addr):
+        for i in range(0 if addr_prev == 0 & addr != 0 else addr_prev + 128, addr):
             firmware.append('\x00')
         for i in range(2, 130):
             firmware.append(decoder[data[i]])
